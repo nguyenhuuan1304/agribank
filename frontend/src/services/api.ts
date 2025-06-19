@@ -1,10 +1,39 @@
-export async function fetchTransactions(page = 1, limit = 10, search = "") {
-  const url = new URL("http://localhost:3001/transactions");
-  url.searchParams.append("page", String(page));
-  url.searchParams.append("limit", String(limit));
-  if (search) url.searchParams.append("search", search);
+import axios from "../lib/axios";
 
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error("Failed to fetch transactions");
-  return await res.json(); // { data: [...], meta: {...} }
-}
+export const fetchTransactions = async (
+  page: number,
+  limit: number,
+  search: string
+) => {
+  const res = await axios.get("/transactions", {
+    params: { page, limit, search },
+  });
+  return res.data;
+};
+
+export const uploadTransactionFile = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await axios.post("/transactions/upload-ipcas", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+};
+
+export const login = async (data: { email: string; password: string }) => {
+  const response = await axios.post("/auth/login", data);
+  return response.data;
+};
+
+export const register = async (data: {
+  email: string;
+  password: string;
+  fullName: string;
+  role: string;
+}) => {
+  const response = await axios.post("/auth/register", data);
+  return response.data;
+};
