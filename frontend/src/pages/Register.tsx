@@ -1,94 +1,190 @@
-import React, { useState } from "react";
+import api from "../lib/axios";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import { register } from "../services/api";
-import { useNavigate } from "react-router-dom";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../components/ui/form";
+import { LockKeyhole, LockKeyholeOpen } from "lucide-react";
+import { toast } from "sonner";
 
-const Register: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
-  const [error, setError] = useState("");
+const FormSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .email({ message: "Vui lòng nhập đúng định dạng email" }),
+    firstName: z.string().trim().min(1, { message: "Họ không được để trống" }),
+    lastName: z.string().trim().min(1, { message: "Tên không được để trống" }),
+    password: z.string().trim().min(6, { message: "Mật khẩu phải đủ 6 ký tự" }),
+    confirmPassword: z
+      .string()
+      .trim()
+      .min(6, { message: "Mật khẩu xác nhận phải đủ 6 ký tự" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Mật khẩu xác nhận không khớp",
+  });
+
+export default function RegisterPage() {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const formRegister = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      email: "",
+      firstName: "",
+      lastName: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    const form = {
+      email: data.email.trim(),
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      password: data.password.trim(),
+    };
     try {
-      const response = await register({ email, password, fullName, role });
-      localStorage.setItem("token", response.token);
-      navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
+      await api.post("/auth/register", form);
+      toast.success("Đăng ký thành công");
+      navigate("/login");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(
+        error?.response.data.message ||
+          "Đăng ký thất bại, vui lòng thử lại sau!"
+      );
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-8 bg-white rounded shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full"
-            />
+    <div className="max-w-md mx-auto mt-12 p-6 border rounded space-y-4 w-[500px]">
+      <h2 className="text-xl font-semibold">Đăng ký tài khoản</h2>
+      <Form {...formRegister}>
+        <form
+          onSubmit={formRegister.handleSubmit(onSubmit)}
+          className="w-full space-y-6"
+        >
+          <FormField
+            control={formRegister.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Nhập email ...."
+                    {...field}
+                    type="email"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formRegister.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tên đầu tiên</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nhập đầu tiên ...." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formRegister.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Họ</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nhập Họ ...." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formRegister.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className="relative">
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Nhập password ...."
+                    {...field}
+                    type={showPassword ? "text" : "password"}
+                  />
+                </FormControl>
+                <div
+                  className="absolute right-2 top-7.5 !p-0 cursor-pointer"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <LockKeyholeOpen className="w-5 h-5" />
+                  ) : (
+                    <LockKeyhole className="w-5 h-5" />
+                  )}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formRegister.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem className="relative">
+                <FormLabel>confirmPassword</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Nhập lại password ...."
+                    {...field}
+                    type={showPasswordConfirm ? "text" : "password"}
+                  />
+                </FormControl>
+                <div
+                  className="absolute right-2 top-7.5 !p-0 cursor-pointer"
+                  onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                >
+                  {showPasswordConfirm ? (
+                    <LockKeyholeOpen className="w-5 h-5" />
+                  ) : (
+                    <LockKeyhole className="w-5 h-5" />
+                  )}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <span>
+            Bạn đã có tài khoản: <a href="/login">Login?</a>
+          </span>
+          <div className="flex justify-center items-center mt-6">
+            <Button type="submit">Đăng Ký</Button>
           </div>
-          <div className="mb-4">
-            <Input
-              type="text"
-              placeholder="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="mb-4">
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="mb-6">
-            <Select onValueChange={setRole} value={role}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="GDV_TTQT">GDV TTQT</SelectItem>
-                <SelectItem value="KSV_TTQT">KSV TTQT</SelectItem>
-                <SelectItem value="GDV_HK">GDV Hậu Kiểm</SelectItem>
-                <SelectItem value="ADMIN">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button type="submit" className="w-full">
-            Register
-          </Button>
         </form>
-        <p className="mt-4 text-center text-sm">
-          Already have an account?{" "}
-          <a href="/login" className="text-blue-500 hover:underline">
-            Login
-          </a>
-        </p>
-      </div>
+      </Form>
     </div>
   );
-};
-
-export default Register;
+}

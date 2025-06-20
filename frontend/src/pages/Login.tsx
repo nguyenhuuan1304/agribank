@@ -1,57 +1,114 @@
-import React, { useState } from "react";
+import api from "../lib/axios";
+import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { login } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LockKeyhole, LockKeyholeOpen } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+const FormSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email({ message: "Vui lòng nhập đúng định dạng email" }),
+  password: z.string().trim().min(6, { message: "Mật khẩu phải đủ 6 ký tự" }),
+});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+export default function LoginPage() {
+  const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const formLogin = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
-      const response = await login({ email, password });
-      localStorage.setItem("token", response.token);
-      navigate("/dashboard");
-    } catch {
-      setError("Invalid email or password");
+      const res = await api.post("/auth/login", data);
+      login(res.data.access_token);
+      toast.success("Đăng nhập thành công");
+      localStorage.setItem("refreshToken", res.data.refresh_token);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(
+        error?.response.data.message ||
+          "Đăng nhập thất bại, vui lòng thử lại sau"
+      );
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-8 bg-white rounded shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full"
-            />
+    <div className="max-w-md mx-auto mt-40 p-6 border rounded space-y-4 w-[500px]">
+      <h2 className="text-xl font-semibold">Đăng nhập</h2>
+      <Form {...formLogin}>
+        <form
+          onSubmit={formLogin.handleSubmit(onSubmit)}
+          className="w-full space-y-6"
+        >
+          <FormField
+            control={formLogin.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Nhập email ...."
+                    {...field}
+                    type="email"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formLogin.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className="relative">
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Nhập password ...."
+                    {...field}
+                    type={showPassword ? "text" : "password"}
+                  />
+                </FormControl>
+                <div
+                  className="absolute right-2 top-7.5 !p-0 cursor-pointer"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <LockKeyholeOpen className="w-5 h-5" />
+                  ) : (
+                    <LockKeyhole className="w-5 h-5" />
+                  )}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-center items-center">
+            <Button type="submit">Đăng Nhập</Button>
           </div>
-          <div className="mb-6">
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <Button type="submit" className="w-full">
-            Login
-          </Button>
         </form>
-      </div>
+      </Form>
     </div>
   );
-};
-
-export default Login;
+}

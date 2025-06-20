@@ -19,13 +19,24 @@ import {
 } from "./ui/dialog";
 
 type Transaction = {
-  id: number;
-  transaction_number: string;
-  customer_name: string;
-  transaction_amount: number;
+  amount: string;
+  bencust: string;
+  contract_number: string | null;
+  created_at: string;
   currency: string;
-  transaction_date: string;
+  custnm: string;
+  custno: string;
+  expected_declaration_date: string | null;
+  expected_delivery_date: string | null;
+  id: number;
+  is_document_added: boolean;
+  note: string | null;
   remark: string;
+  status: string | null;
+  tradate: string;
+  trref: string;
+  updated_at: string | null;
+  updated_by: string | null;
 };
 
 export default function TransactionTable() {
@@ -66,7 +77,7 @@ export default function TransactionTable() {
 
   useEffect(() => {
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -76,7 +87,7 @@ export default function TransactionTable() {
   };
 
   return (
-    <div className="overflow-auto max-w-7xl mx-auto p-4 space-y-4">
+    <div className="overflow-auto w-full mx-auto space-y-4">
       <div className="flex justify-between w-full">
         <form onSubmit={handleSearchSubmit} className="flex gap-2 max-w-md">
           <Input
@@ -126,28 +137,36 @@ export default function TransactionTable() {
         <p>Loading...</p>
       ) : (
         <>
-          <table className="min-w-full text-sm border rounded">
+          <table className="min-w-full text-sm border border-gray-200 rounded">
             <thead className="bg-gray-100">
               <tr>
-                <th className="text-left p-2">Transaction</th>
-                <th className="text-left p-2">Customer</th>
-                <th className="text-left p-2">Amount</th>
-                <th className="text-left p-2">Currency</th>
-                <th className="text-left p-2">Date</th>
-                <th className="text-left p-2">Remark</th>
+                <th className="text-left p-2">Số giao dịch</th>
+                <th className="text-left p-2">Mã khách hàng</th>
+                <th className="text-left p-2">Tên khách hàng</th>
+                <th className="text-left p-2">Số tiền</th>
+                <th className="text-left p-2">Loại tiền</th>
+                <th className="text-left p-2">Ngày giao dịch</th>
+                <th className="text-left p-2 w-[200px]">Remark</th>
+                <th className="text-left p-2">Trạng thái</th>
+                <th className="text-left p-2">Ngày nhận hàng dự kiến</th>
+                <th className="text-left p-2">Ghi chú</th>
               </tr>
             </thead>
             <tbody>
               {data.map((tx) => (
-                <tr key={tx.id} className="border-b">
-                  <td className="p-2">{tx.transaction_number}</td>
-                  <td className="p-2">{tx.customer_name}</td>
-                  <td className="p-2">{tx.transaction_amount}</td>
+                <tr key={tx.id} className="border-b border-gray-200">
+                  <td className="p-2">{tx.trref}</td>
+                  <td className="p-2">{tx.custno}</td>
+                  <td className="p-2">{tx.custnm}</td>
+                  <td className="p-2">{tx.amount}</td>
                   <td className="p-2">{tx.currency}</td>
                   <td className="p-2">
-                    {new Date(tx.transaction_date).toLocaleDateString()}
+                    {new Date(tx.tradate).toLocaleDateString()}
                   </td>
-                  <td className="p-2">{tx.remark}</td>
+                  <td className="p-2 w-[200px]">{tx.remark}</td>
+                  <td className="p-2">{tx.status ?? "-"}</td>
+                  <td className="p-2">{tx.expected_delivery_date ?? "-"}</td>
+                  <td className="p-2">{tx.note ?? "-"}</td>
                 </tr>
               ))}
               {data.length === 0 && (

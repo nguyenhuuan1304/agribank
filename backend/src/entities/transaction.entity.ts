@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity('transactions')
@@ -10,41 +11,53 @@ export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  transaction_number: string;
+  @Column({ type: 'varchar' })
+  trref: string;
 
-  @Column()
-  customer_number: string;
+  @Column({ type: 'varchar' })
+  custno: string;
 
-  @Column()
-  customer_name: string;
+  @Column({ type: 'varchar' })
+  custnm: string;
 
-  @Column({ type: 'date' })
-  transaction_date: Date;
+  @Column({ type: 'date', nullable: true })
+  tradate: Date | null;
 
-  @Column()
+  @Column({ type: 'varchar' })
   currency: string;
 
   @Column({ type: 'decimal', precision: 15, scale: 2 })
-  transaction_amount: number;
+  amount: number;
 
-  @Column()
-  beneficiary: string;
+  @Column({ type: 'varchar' })
+  bencust: string;
 
   @Column({ type: 'text' })
   remark: string;
 
-  @Column({ nullable: true })
-  contract_number: string;
+  @Column({ type: 'varchar', nullable: true })
+  contract_number: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  status: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  note: string | null;
 
   @Column({ type: 'date', nullable: true })
-  expected_delivery_date: Date;
+  expected_delivery_date: Date | null;
 
   @Column({ type: 'date', nullable: true })
-  expected_declaration_date: Date;
+  expected_declaration_date: Date | null;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   is_document_added: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  updated_by: string | null;
+
+  @UpdateDateColumn({ nullable: true })
+  updated_at: Date | null;
 
   @CreateDateColumn()
   created_at: Date;

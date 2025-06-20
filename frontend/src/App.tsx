@@ -1,26 +1,32 @@
-import Header from "./pages/Header";
 import { Dashboard } from "./pages/Dashboard";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import { Routes, Route } from "react-router-dom";
+import { ProtectedRoute, PublicOnlyRoute } from "./router/guards";
+import LoginPage from "./pages/Login";
+import RegisterPage from "./pages/Register";
+import Header from "./pages/Header";
 
-function App() {
+function AppRouter() {
   return (
-    // <div >
-    //   <Dashboard />
-    // </div>
-    <BrowserRouter>
-      <div className="bg-gray-50 min-h-screen w-screen">
-        <Header />
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+    <div className="flex flex-col h-screen w-screen">
+      <Header />
+      <Routes>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/" element={<Login />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+        </Route>
+
+        <Route element={<PublicOnlyRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
+
+        <Route
+          path="*"
+          element={<p className="text-center mt-10">404 - Not found</p>}
+        />
+      </Routes>
+    </div>
   );
 }
 
-export default App;
+export default AppRouter;
